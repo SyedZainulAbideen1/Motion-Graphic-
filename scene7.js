@@ -22,7 +22,7 @@
       { id: "shot-5", start: 25, end: 38 },  // return + camera push
     ],
     camera: {
-      focus: { x: 70.5, y: 53.3 }, // % — centroid of the Birth Canal passage
+      focus: { x: 69.97, y: 52.55 }, // % — centroid of the traced passage path
       pushStart: 27,
       pushEnd: 37,
       startScale: 1.0,
@@ -69,11 +69,9 @@
     const shots = sceneConfig.shots;
 
     // ================= SHOT 1 (0–6s): map is visible from frame one;
-    // the only new element is the thin outline annotation (line-draw,
-    // then a single restrained two-beat pulse). =================
-    setClass(warningZoneEl, "is-visible", t >= 1.4);
-    setClass(warningZoneEl, "is-drawn", t >= 1.6);
-    setClass(warningZoneEl, "is-pulsing", t >= 3.2 && t < 4.4);
+    // the only new element is a single stroke line-draw along the
+    // traced passage shape, then a hold. No repeated pulsing. =================
+    setClass(warningZoneEl, "is-drawn", t >= 1.4);
 
     // ================= SHOT 2 (6–12s): two short ticks, no circles ==============
     setClass(tick01El, "is-visible", t >= 6.6 && t < shots[3].start);
