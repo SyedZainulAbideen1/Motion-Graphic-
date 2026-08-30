@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>TerraVault — Scene 07 (03:09–03:47)</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!--
+  TERRAVAULT — SCENE 07  |  03:09–03:47 (38s)
+  Refs: SCENE_ARCHITECTURE.md, TERRAVAULT_CODE_ENGINE.md,
+        MOTION_LANGUAGE.md, TERRAVAULT_TIMELINE_SYSTEM.md,
+        COMPONENT_LIBRARY.md, TERRAVAULT_VISUAL_IDENTITY.md
+
+  ASSET NOTE:
+  Asset 01 (cave-map.png) already has the "Birth Canal (Tight)" passage
+  and its label baked into the image in orange. The brief requires the
+  warning indicator to exist as a separate, editable HTML/SVG/CSS layer
+  and to be invisible until it is introduced in Shot 1 — not baked in.
+  The map pixels are untouched. A soft "concealer" (matching the map's
+  own tone) sits over that exact region and lifts away during Shot 1,
+  timed together with an independent SVG glow (#warningZone) fading in
+  underneath it. On screen this reads as the passage's danger being
+  revealed — the actual animatable, reusable layer is the SVG glow,
+  not the baked artwork.
+-->
+
+<div class="stage">
+  <div class="scene" id="scene-07">
+
+    <!-- CAMERA / WORLD : Shot 5 push moves this whole group -->
+    <div class="camera" id="camera">
+      <div class="world" id="world">
+
+        <!-- LAYER: BACKGROUND (z0) — Asset 02 -->
+        <div class="layer background">
+          <img src="assets/blueprint-bg.png" alt="" class="bg-img">
+        </div>
+
+        <!-- LAYER: MAP GROUP (z10) — Asset 01, Shots 1 / 2 / 5 -->
+        <div class="layer map-group" id="mapGroup">
+          <img src="assets/cave-map.png" alt="Nutty Putty Cave exploration map" class="map-img">
+
+          <!-- concealer: see ASSET NOTE above -->
+          <div class="concealer" id="concealer"></div>
+
+          <!-- reusable component: single WarningZone indicator (Shot 1) -->
+          <svg class="warning-zone" id="warningZone" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <defs>
+              <radialGradient id="dangerGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%"  stop-color="#ff6a35" stop-opacity="0.5"/>
+                <stop offset="60%" stop-color="#ff6a35" stop-opacity="0.16"/>
+                <stop offset="100%" stop-color="#ff6a35" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <ellipse class="danger-glow" cx="70.5" cy="53.3" rx="8.5" ry="5.2" fill="url(#dangerGlow)"/>
+            <ellipse class="danger-outline" cx="70.5" cy="53.3" rx="6" ry="3.8" fill="none" stroke="#ff8a55" stroke-width="0.22"/>
+          </svg>
+
+          <!-- reusable component: IncidentMarker x2 (Shot 2) -->
+          <div class="incident-marker" id="marker01" style="left:66%; top:52.4%;">
+            <span class="marker-ring"></span>
+            <span class="marker-dot">1</span>
+          </div>
+          <div class="incident-marker" id="marker02" style="left:74.4%; top:55.2%;">
+            <span class="marker-ring"></span>
+            <span class="marker-dot">2</span>
+          </div>
+        </div>
+
+        <!-- LAYER: COMPARISON (z20) — Asset 03, Shot 3 -->
+        <div class="layer comparison" id="comparisonLayer">
+          <div class="comparison-mask">
+            <img src="assets/comparison-visual.png" alt="Height and weight comparison: Scout 5'7\" 140 lbs vs John 6'3\" 190 lbs" class="comparison-img">
+          </div>
+        </div>
+
+        <!-- LAYER: PULLEY (z20) — Asset 04, Shot 4 -->
+        <div class="layer pulley" id="pulleyLayer">
+          <img src="assets/pulley-visual.png" alt="Rope and pulley extraction system" class="pulley-img">
+
+          <!-- subtle rope-tension highlight, drawn over the existing lines -->
+          <svg class="rope-highlight" id="ropeHighlight" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <line x1="39.8" y1="21.8" x2="5.7" y2="99.9" class="rope-line"/>
+            <line x1="61.0" y1="21.8" x2="61.9" y2="69.1" class="rope-line"/>
+          </svg>
+
+          <!-- "14 HOURS" — HTML/CSS text, independent of the artwork -->
+          <div class="hours-readout" id="hoursReadout">
+            <span class="hours-value" id="hoursValue">0</span>
+            <span class="hours-unit" id="hoursUnit">HOURS</span>
+          </div>
+        </div>
+
+      </div><!-- /world -->
+    </div><!-- /camera -->
+
+    <!-- LAYER: FOREGROUND / VIGNETTE (z70) -->
+    <div class="layer foreground vignette"></div>
+
+  </div><!-- /scene -->
+</div><!-- /stage -->
+
+<!-- DEV-ONLY PREVIEW CONTROLS — remove before final export/render -->
+<div class="dev-panel" id="devPanel">
+  <button id="btnPlay">Play</button>
+  <button id="btnRestart">Restart</button>
+  <input type="range" id="scrubber" min="0" max="38" step="0.01" value="0">
+  <span id="timeReadout">00:00.0 / 00:38.0</span>
+  <label class="dev-toggle"><input type="checkbox" id="btnDebug"> debug</label>
+</div>
+<div class="debug-hud" id="debugHud"></div>
+
+<script src="scene7.js"></script>
+</body>
+</html>
