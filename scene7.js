@@ -26,24 +26,21 @@
       pushStart: 27,
       pushEnd: 37,
       startScale: 1.0,
-      endScale: 1.42,
+      endScale: 1.22, // restrained push — this is the scene's strongest moment, not a zoom effect
     },
-    hours: { start: 20.2, end: 22.6, from: 0, to: 14 },
+    hoursRevealAt: 20.5, // Shot 4: simple opacity/position reveal, no count-up
   };
 
   // ---- DOM refs ----
   const sceneEl        = document.getElementById("scene-07");
   const cameraEl       = document.getElementById("camera");
   const mapGroupEl     = document.getElementById("mapGroup");
-  const concealerEl    = document.getElementById("concealer");
   const warningZoneEl  = document.getElementById("warningZone");
-  const marker01El     = document.getElementById("marker01");
-  const marker02El     = document.getElementById("marker02");
+  const tick01El       = document.getElementById("tick01");
+  const tick02El       = document.getElementById("tick02");
   const comparisonLayer= document.getElementById("comparisonLayer");
   const pulleyLayer    = document.getElementById("pulleyLayer");
-  const ropeHighlight  = document.getElementById("ropeHighlight");
   const hoursReadout   = document.getElementById("hoursReadout");
-  const hoursValueEl   = document.getElementById("hoursValue");
 
   const btnPlay     = document.getElementById("btnPlay");
   const btnRestart  = document.getElementById("btnRestart");
@@ -71,17 +68,16 @@
   function render(t) {
     const shots = sceneConfig.shots;
 
-    // ================= SHOT 1 (0–6s): concealer lifts, warning fades in =================
-    const concealFade = progress(t, 1.3, 4.1);
-    concealerEl.style.opacity = String(1 - easeOutCubic(concealFade));
+    // ================= SHOT 1 (0–6s): map is visible from frame one;
+    // the only new element is the thin outline annotation (line-draw,
+    // then a single restrained two-beat pulse). =================
+    setClass(warningZoneEl, "is-visible", t >= 1.4);
+    setClass(warningZoneEl, "is-drawn", t >= 1.6);
+    setClass(warningZoneEl, "is-pulsing", t >= 3.2 && t < 4.4);
 
-    const warnFade = progress(t, 1.7, 4.5);
-    warningZoneEl.style.opacity = String(easeOutCubic(warnFade));
-    setClass(warningZoneEl, "is-pulsing", t >= 4.5);
-
-    // ================= SHOT 2 (6–12s): incident markers =================
-    setClass(marker01El, "is-visible", t >= 6.4 && t < shots[3].start);
-    setClass(marker02El, "is-visible", t >= 8.2 && t < shots[3].start);
+    // ================= SHOT 2 (6–12s): two short ticks, no circles ==============
+    setClass(tick01El, "is-visible", t >= 6.6 && t < shots[3].start);
+    setClass(tick02El, "is-visible", t >= 8.4 && t < shots[3].start);
 
     // ================= MAP GROUP visibility across the scene =================
     const mapFadeOutStart = shots[3].start - 0.5;
@@ -104,7 +100,7 @@
     comparisonLayer.style.opacity = String(compOpacity);
     setClass(comparisonLayer, "is-visible", compOpacity > 0.02);
 
-    // ================= SHOT 4 (19–25s): pulley + rope highlight + 14 hours =================
+    // ================= SHOT 4 (19–25s): pulley reveal, then "14 HOURS" =================
     const pulleyInP  = progress(t, shots[3].start, shots[3].start + 0.6);
     const pulleyOutP = progress(t, shots[4].start - 0.5, shots[4].start);
     let pulleyOpacity = 0;
@@ -112,15 +108,8 @@
     else if (t >= shots[4].start - 0.5 && t < shots[4].start) pulleyOpacity = 1 - easeOutCubic(pulleyOutP);
     pulleyLayer.style.opacity = String(pulleyOpacity);
     setClass(pulleyLayer, "is-visible", pulleyOpacity > 0.02);
-    setClass(ropeHighlight, "is-visible", t >= shots[3].start + 0.9 && t < shots[4].start);
 
-    const h = sceneConfig.hours;
-    const hoursVisible = t >= h.start - 0.2 && t < shots[4].start;
-    setClass(hoursReadout, "is-visible", hoursVisible);
-    if (hoursVisible) {
-      const p = progress(t, h.start, h.end);
-      hoursValueEl.textContent = String(Math.round(lerp(h.from, h.to, easeOutCubic(p))));
-    }
+    setClass(hoursReadout, "is-visible", t >= sceneConfig.hoursRevealAt && t < shots[4].start);
 
     // ================= SHOT 5 (25–38s): camera push toward the warning zone =================
     const cam = sceneConfig.camera;
