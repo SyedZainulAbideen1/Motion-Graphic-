@@ -2,167 +2,104 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TerraVault — Scene 07</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title>TerraVault — Scene 07 (03:09–03:47)</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-  <div class="stage">
+  <!--
+  TERRAVAULT — SCENE 07  |  03:09–03:47 (38s)
+  Refs: SCENE_ARCHITECTURE.md, TERRAVAULT_CODE_ENGINE.md,
+        MOTION_LANGUAGE.md, TERRAVAULT_TIMELINE_SYSTEM.md,
+        COMPONENT_LIBRARY.md, TERRAVAULT_VISUAL_IDENTITY.md
 
+  ASSET NOTE:
+  Asset 01 (cave-map.png) already shows the "Birth Canal (Tight)" passage
+  in its native orange colour — that is simply how the map looks, and it
+  is visible from frame one like the rest of the map. The Shot 1 "danger
+  highlight" (#warningZone) is a separate, editable SVG path traced from
+  the passage's own pixels (extracted as a centerline through the actual
+  orange tunnel outline, then simplified to ~70 points) — it follows the
+  real bends of that specific passage rather than an invented ellipse or
+  rectangle. It is the only animated addition; the map itself is never
+  covered, hidden, or artificially revealed.
+-->
+
+  <div class="stage">
     <div class="scene" id="scene-07">
 
+      <!-- CAMERA / WORLD : Shot 5 push moves this whole group -->
       <div class="camera" id="camera">
-
         <div class="world" id="world">
 
-          <!-- BACKGROUND -->
+          <!-- LAYER: BACKGROUND (z0) — Asset 02 -->
           <div class="layer background">
-            <img src="assets/blueprint-bg.png" class="bg-img" alt="" />
+            <img src="assets/blueprint-bg.png" alt="" class="bg-img">
           </div>
 
-
-          <!-- =========================
-               SHOT 1 / 2 / 5 : MAP
-               ========================= -->
-
+          <!-- LAYER: MAP GROUP (z10) — Asset 01, Shots 1 / 2 / 5 -->
           <div class="layer map-group" id="mapGroup">
+            <img src="assets/cave-map.png" alt="Nutty Putty Cave exploration map" class="map-img">
 
-            <img src="assets/cave-map.png" class="map-img" alt="Nutty Putty Cave exploration map" />
-
-            <!--
-              IMPORTANT:
-              This SVG uses the SAME 1000x562 coordinate
-              system as cave-map.png.
-
-              The orange stroke follows the actual
-              Birth Canal passage.
-            -->
-
-            <svg class="warning-zone" id="warningZone" viewBox="0 0 1000 562" preserveAspectRatio="none"
-              aria-hidden="true">
-
-              <path id="dangerOutline" class="danger-outline" pathLength="1" d="
-                  M 640 289
-
-                  C 646 291,
-                    651 298,
-                    657 303
-
-                  C 664 309,
-                    671 314,
-                    678 314
-
-                  C 686 314,
-                    692 310,
-                    699 307
-
-                  C 706 304,
-                    712 306,
-                    718 309
-
-                  C 725 312,
-                    732 311,
-                    738 307
-
-                  C 744 303,
-                    749 298,
-                    754 289
-                " />
-
+            <!-- reusable component: WarningHighlight — a single stroked path
+               traced from the passage's own pixels (see /assets notes),
+               not an invented shape. It follows the real bends of the
+               Birth Canal tunnel like a highlighter marking a route on a
+               paper map. Reveals with a stroke line-draw, then holds. -->
+            <svg class="warning-zone" id="warningZone" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <path class="danger-outline" id="dangerOutline" pathLength="1"
+                d="M 66.367,53.241 L 66.188,53.241 L 66.008,53.241 L 65.829,53.135 L 65.649,52.922 L 65.589,52.604 L 65.53,52.285 L 65.41,51.966 L 65.23,51.647 L 65.41,51.541 L 65.589,51.541 L 65.769,51.647 L 65.949,51.753 L 66.128,51.753 L 66.308,51.647 L 66.487,51.541 L 66.667,51.541 L 66.846,51.647 L 67.026,51.647 L 67.145,51.86 L 67.205,52.179 L 67.385,52.391 L 67.504,52.71 L 67.564,53.029 L 67.684,53.348 L 67.864,53.241 L 68.043,53.348 L 68.223,53.454 L 68.402,53.56 L 68.582,53.56 L 68.761,53.56 L 68.941,53.666 L 69.12,53.773 L 69.3,53.773 L 69.479,53.879 L 69.659,53.985 L 69.838,53.985 L 70.018,54.091 L 70.197,54.091 L 70.377,54.091 L 70.557,53.985 L 70.736,53.666 L 70.916,53.56 L 71.095,53.348 L 71.275,53.241 L 71.454,53.135 L 71.634,53.029 L 71.813,52.816 L 71.873,52.497 L 71.993,52.179 L 72.113,51.966 L 72.292,52.072 L 72.472,52.072 L 72.651,52.072 L 72.831,52.179 L 73.01,52.179 L 73.19,52.179 L 73.369,52.179 L 73.549,52.179 L 73.728,52.497 L 73.908,52.71 L 74.087,52.604 L 74.207,52.391 L 74.207,52.072 L 74.327,51.753 L 74.387,51.435 L 74.506,51.116 L 74.686,50.903 L 74.865,50.903 L 75.045,51.01 L 75.224,51.01 L 75.344,51.328 L 75.344,51.435"
+                fill="none" stroke="#ff8a55" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
 
-
-            <!-- TWO VERY SMALL INCIDENT INDICATORS -->
-
-            <svg class="incident-layer" id="incidentLayer" viewBox="0 0 1000 562" preserveAspectRatio="none"
-              aria-hidden="true">
-
-              <circle id="incident01" class="incident-dot" cx="665" cy="307" r="3" />
-
-              <circle id="incident02" class="incident-dot" cx="735" cy="309" r="3" />
-
+            <!-- minimal duplicate-event indicator (Shot 2): two short ticks
+               placed directly on the traced passage, no circles, no numerals -->
+            <svg class="incident-ticks" id="incidentTicks" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <line class="tick" id="tick01" x1="66.1" y1="50.9" x2="66.9" y2="52.2" stroke="#ff8a55"
+                stroke-width="0.22" stroke-linecap="round" />
+              <line class="tick" id="tick02" x1="73.4" y1="51.7" x2="74.2" y2="53.0" stroke="#ff8a55"
+                stroke-width="0.22" stroke-linecap="round" />
             </svg>
-
           </div>
 
-
-          <!-- =========================
-               SHOT 3 : COMPARISON
-               ========================= -->
-
+          <!-- LAYER: COMPARISON (z20) — Asset 03, Shot 3 -->
           <div class="layer comparison" id="comparisonLayer">
-
-            <img src="assets/comparison-visual.png" class="comparison-img"
-              alt="Scout and John height and weight comparison" />
-
-          </div>
-
-
-          <!-- =========================
-               SHOT 4 : PULLEY
-               ========================= -->
-
-          <div class="layer pulley" id="pulleyLayer">
-
-            <img src="assets/pulley-visual.png" class="pulley-img" alt="Rope and pulley extraction system" />
-
-            <div class="hours-readout" id="hoursReadout">
-
-              <span class="hours-value">
-                14
-              </span>
-
-              <span class="hours-unit">
-                HOURS
-              </span>
-
+            <div class="comparison-mask">
+              <img src="assets/comparison-visual.png" alt="Height and weight comparison: Scout 5'7\" 140 lbs vs John
+                6'3\" 190 lbs" class="comparison-img">
             </div>
-
           </div>
 
-        </div>
+          <!-- LAYER: PULLEY (z20) — Asset 04, Shot 4 -->
+          <div class="layer pulley" id="pulleyLayer">
+            <img src="assets/pulley-visual.png" alt="Rope and pulley extraction system" class="pulley-img">
 
-      </div>
+            <!-- "14 HOURS" — plain HTML/CSS text, simple opacity/position reveal -->
+            <div class="hours-readout" id="hoursReadout">
+              <span class="hours-value">14</span>
+              <span class="hours-unit">HOURS</span>
+            </div>
+          </div>
 
-    </div>
+        </div><!-- /world -->
+      </div><!-- /camera -->
 
-  </div>
+    </div><!-- /scene -->
+  </div><!-- /stage -->
 
-
-  <!-- DEVELOPMENT CONTROLS -->
-
+  <!-- DEV-ONLY PREVIEW CONTROLS — remove before final export/render -->
   <div class="dev-panel" id="devPanel">
-
-    <button id="btnPlay">
-      Play
-    </button>
-
-    <button id="btnRestart">
-      Restart
-    </button>
-
-    <input type="range" id="scrubber" min="0" max="38" step="0.01" value="0" />
-
-    <span id="timeReadout">
-      00:00.0 / 00:38.0
-    </span>
-
-    <label class="dev-toggle">
-      <input type="checkbox" id="btnDebug" />
-      Debug
-    </label>
-
+    <button id="btnPlay">Play</button>
+    <button id="btnRestart">Restart</button>
+    <input type="range" id="scrubber" min="0" max="38" step="0.01" value="0">
+    <span id="timeReadout">00:00.0 / 00:38.0</span>
+    <label class="dev-toggle"><input type="checkbox" id="btnDebug"> debug</label>
   </div>
-
-
   <div class="debug-hud" id="debugHud"></div>
 
-
   <script src="scene7.js"></script>
-
 </body>
 
 </html>
