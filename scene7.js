@@ -1,23 +1,22 @@
 /* =========================================================
-   TERRAVAULT — SCENE 07
-   03:09–03:47
-   Total duration: 38 seconds
+   TERRAVAULT — SCENE 07 TIMELINE ENGINE (v2)
 
-   Clean documentary motion system.
+   Refs:
+   TERRAVAULT_TIMELINE_SYSTEM.md
+   TERRAVAULT_CODE_ENGINE.md
+   ANIMATION_PRINCIPLES.md
 
-   IMPORTANT:
-   The warning path is aligned to the actual
-   Birth Canal passage in cave-map.png.
+   One master clock drives every layer.
+   Deterministic: the same time input always produces
+   the same visual state.
    ========================================================= */
 
 (function () {
-
   "use strict";
 
 
-  /* =========================
-     CONFIG
-     ========================= */
+  const DEBUG = false;
+
 
   const sceneConfig = {
 
@@ -57,25 +56,33 @@
 
     ],
 
+
     camera: {
 
-      focusX: 70.5,
-      focusY: 53,
+      focus: {
+        x: 69.97,
+        y: 52.55
+      },
 
       pushStart: 27,
+
       pushEnd: 37,
 
-      startScale: 1,
-      endScale: 1.28
+      startScale: 1.0,
 
-    }
+      endScale: 1.22
+
+    },
+
+
+    hoursRevealAt: 20.5
 
   };
 
 
-  /* =========================
-     DOM
-     ========================= */
+  // ========================================================
+  // DOM REFERENCES
+  // ========================================================
 
   const sceneEl =
     document.getElementById("scene-07");
@@ -89,14 +96,11 @@
   const warningZoneEl =
     document.getElementById("warningZone");
 
-  const incidentLayerEl =
-    document.getElementById("incidentLayer");
+  const tick01El =
+    document.getElementById("tick01");
 
-  const incident01El =
-    document.getElementById("incident01");
-
-  const incident02El =
-    document.getElementById("incident02");
+  const tick02El =
+    document.getElementById("tick02");
 
   const comparisonLayer =
     document.getElementById("comparisonLayer");
@@ -126,52 +130,44 @@
     document.getElementById("debugHud");
 
 
-  /* =========================
-     UTILITIES
-     ========================= */
+  // NEW: RECORD MODE BUTTON
+  const btnRecordMode =
+    document.getElementById("btnRecordMode");
 
-  const clamp = (value, min, max) =>
-    Math.max(min, Math.min(max, value));
+
+  // ========================================================
+  // UTILITIES
+  // ========================================================
+
+  const clamp = (v, a, b) =>
+    Math.max(a, Math.min(b, v));
 
 
   const lerp = (a, b, t) =>
     a + (b - a) * t;
 
 
-  const progress = (time, start, end) => {
-
-    if (end === start) {
-      return time >= end ? 1 : 0;
-    }
-
-    return clamp(
-      (time - start) / (end - start),
+  const progress = (t, start, end) =>
+    clamp(
+      (t - start) / (end - start),
       0,
       1
     );
-
-  };
 
 
   const easeOutCubic = (t) =>
     1 - Math.pow(1 - t, 3);
 
 
-  const easeInOutCubic = (t) => {
-
-    return t < 0.5
-
+  const easeInOutCubic = (t) =>
+    t < 0.5
       ? 4 * t * t * t
-
-      : 1 -
-        Math.pow(-2 * t + 2, 3) / 2;
-
-  };
+      : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
 
-  /* =========================
-     RESPONSIVE STAGE
-     ========================= */
+  const setClass = (el, name, on) =>
+    el.classList.toggle(name, !!on);
+
 
   function fitStage() {
 
@@ -181,8 +177,10 @@
         window.innerHeight / 1080
       );
 
-    sceneEl.style.transform =
-      `scale(${scale})`;
+    sceneEl.style.setProperty(
+      "--stage-scale",
+      scale.toFixed(4)
+    );
 
   }
 
@@ -196,161 +194,117 @@
   fitStage();
 
 
-  /* =========================
-     MAIN RENDER FUNCTION
-     ========================= */
+  // ========================================================
+  // RENDER
+  // Pure function of time.
+  // ========================================================
 
-  function render(time) {
+  function render(t) {
 
     const shots =
       sceneConfig.shots;
 
 
-    /* =====================================================
-       SHOT 1
-       00:00–06:00
-       Cave map + actual Birth Canal highlight
-       ===================================================== */
+    // ======================================================
+    // SHOT 1
+    // 0–6s
+    // ======================================================
 
-    const warningProgress =
+    setClass(
+      warningZoneEl,
+      "is-drawn",
+      t >= 1.4
+    );
+
+
+    // ======================================================
+    // SHOT 2
+    // 6–12s
+    // ======================================================
+
+    setClass(
+      tick01El,
+      "is-visible",
+      t >= 6.6 &&
+      t < shots[3].start
+    );
+
+
+    setClass(
+      tick02El,
+      "is-visible",
+      t >= 8.4 &&
+      t < shots[3].start
+    );
+
+
+    // ======================================================
+    // MAP GROUP VISIBILITY
+    // ======================================================
+
+    const mapFadeOutStart =
+      shots[3].start - 0.5;
+
+    const mapFadeIn0 =
+      shots[4].end - 0.6;
+
+
+    const fadeOutP =
       progress(
-        time,
-        0.8,
-        2.4
+        t,
+        mapFadeOutStart,
+        shots[3].start
       );
 
 
-    warningZoneEl.style.opacity =
-      String(
-        easeOutCubic(warningProgress)
+    const fadeInP =
+      progress(
+        t,
+        mapFadeIn0,
+        shots[4].end
       );
 
 
-    if (time >= 0.8) {
+    let mapOpacity;
 
-      warningZoneEl.classList.add(
-        "is-active"
-      );
-
-    } else {
-
-      warningZoneEl.classList.remove(
-        "is-active"
-      );
-
-    }
-
-
-    /* =====================================================
-       SHOT 2
-       06:00–12:00
-       Two tiny incident points
-       ===================================================== */
-
-    if (time >= 6) {
-
-      incidentLayerEl.classList.add(
-        "is-visible"
-      );
-
-    } else {
-
-      incidentLayerEl.classList.remove(
-        "is-visible"
-      );
-
-    }
-
-
-    if (time >= 6.5) {
-
-      incident01El.classList.add(
-        "is-visible"
-      );
-
-    } else {
-
-      incident01El.classList.remove(
-        "is-visible"
-      );
-
-    }
-
-
-    if (time >= 8.2) {
-
-      incident02El.classList.add(
-        "is-visible"
-      );
-
-    } else {
-
-      incident02El.classList.remove(
-        "is-visible"
-      );
-
-    }
-
-
-    /* =====================================================
-       MAP VISIBILITY
-       ===================================================== */
-
-    let mapOpacity = 1;
-
-
-    /*
-      Fade the map out just before
-      comparison begins.
-    */
 
     if (
-      time >= 18.4 &&
-      time < 19
+      t <
+      mapFadeOutStart
     ) {
 
-      const p =
-        progress(
-          time,
-          18.4,
-          19
-        );
+      mapOpacity = 1;
+
+    }
+
+    else if (
+      t <
+      shots[3].start
+    ) {
 
       mapOpacity =
         1 -
-        easeOutCubic(p);
-
-    }
-
-
-    /*
-      Map returns during Shot 5.
-    */
-
-    else if (
-      time >= 25 &&
-      time < 25.8
-    ) {
-
-      const p =
-        progress(
-          time,
-          25,
-          25.8
+        easeOutCubic(
+          fadeOutP
         );
 
-      mapOpacity =
-        easeOutCubic(p);
-
     }
 
-
     else if (
-      time >= 19 &&
-      time < 25
+      t <
+      mapFadeIn0
     ) {
 
       mapOpacity = 0;
+
+    }
+
+    else {
+
+      mapOpacity =
+        easeOutCubic(
+          fadeInP
+        );
 
     }
 
@@ -359,113 +313,115 @@
       String(mapOpacity);
 
 
-    /* =====================================================
-       SHOT 3
-       12–19
-       Scout vs John
-       ===================================================== */
+    // ======================================================
+    // SHOT 3
+    // 12–19s
+    // Comparison
+    // ======================================================
 
-    let comparisonOpacity = 0;
+    const compInP =
+      progress(
+        t,
+        shots[2].start,
+        shots[2].start + 0.7
+      );
+
+
+    const compOutP =
+      progress(
+        t,
+        shots[3].start - 0.5,
+        shots[3].start
+      );
+
+
+    let compOpacity = 0;
 
 
     if (
-      time >= 12 &&
-      time < 18.4
+      t >= shots[2].start &&
+      t < shots[3].start - 0.5
     ) {
 
-      const p =
-        progress(
-          time,
-          12,
-          12.8
+      compOpacity =
+        easeOutCubic(
+          compInP
         );
-
-      comparisonOpacity =
-        easeOutCubic(p);
 
     }
 
-
     else if (
-      time >= 18.4 &&
-      time < 19
+      t >= shots[3].start - 0.5 &&
+      t < shots[3].start
     ) {
 
-      const p =
-        progress(
-          time,
-          18.4,
-          19
-        );
-
-      comparisonOpacity =
+      compOpacity =
         1 -
-        easeOutCubic(p);
+        easeOutCubic(
+          compOutP
+        );
 
     }
 
 
     comparisonLayer.style.opacity =
-      String(comparisonOpacity);
+      String(compOpacity);
 
 
-    if (comparisonOpacity > 0.01) {
+    setClass(
+      comparisonLayer,
+      "is-visible",
+      compOpacity > 0.02
+    );
 
-      comparisonLayer.classList.add(
-        "is-visible"
+
+    // ======================================================
+    // SHOT 4
+    // 19–25s
+    // Pulley + 14 HOURS
+    // ======================================================
+
+    const pulleyInP =
+      progress(
+        t,
+        shots[3].start,
+        shots[3].start + 0.6
       );
 
-    } else {
 
-      comparisonLayer.classList.remove(
-        "is-visible"
+    const pulleyOutP =
+      progress(
+        t,
+        shots[4].start - 0.5,
+        shots[4].start
       );
 
-    }
-
-
-    /* =====================================================
-       SHOT 4
-       19–25
-       Pulley + 14 HOURS
-       ===================================================== */
 
     let pulleyOpacity = 0;
 
 
     if (
-      time >= 19 &&
-      time < 24.5
+      t >= shots[3].start &&
+      t < shots[4].start - 0.5
     ) {
 
-      const p =
-        progress(
-          time,
-          19,
-          19.8
-        );
-
       pulleyOpacity =
-        easeOutCubic(p);
+        easeOutCubic(
+          pulleyInP
+        );
 
     }
 
-
     else if (
-      time >= 24.5 &&
-      time < 25
+      t >= shots[4].start - 0.5 &&
+      t < shots[4].start
     ) {
-
-      const p =
-        progress(
-          time,
-          24.5,
-          25
-        );
 
       pulleyOpacity =
         1 -
-        easeOutCubic(p);
+        easeOutCubic(
+          pulleyOutP
+        );
 
     }
 
@@ -474,142 +430,109 @@
       String(pulleyOpacity);
 
 
-    if (pulleyOpacity > 0.01) {
-
-      pulleyLayer.classList.add(
-        "is-visible"
-      );
-
-    } else {
-
-      pulleyLayer.classList.remove(
-        "is-visible"
-      );
-
-    }
+    setClass(
+      pulleyLayer,
+      "is-visible",
+      pulleyOpacity > 0.02
+    );
 
 
-    /* =========================
-       14 HOURS
-       ========================= */
-
-    if (
-      time >= 20.2 &&
-      time < 24.5
-    ) {
-
-      hoursReadout.classList.add(
-        "is-visible"
-      );
-
-    } else {
-
-      hoursReadout.classList.remove(
-        "is-visible"
-      );
-
-    }
+    setClass(
+      hoursReadout,
+      "is-visible",
+      t >= sceneConfig.hoursRevealAt &&
+      t < shots[4].start
+    );
 
 
-    /* =====================================================
-       SHOT 5
-       25–38
-       Slow camera push
-       ===================================================== */
+    // ======================================================
+    // SHOT 5
+    // 25–38s
+    // Camera push toward warning zone
+    // ======================================================
 
-    const camera =
+    const cam =
       sceneConfig.camera;
 
 
-    const pushProgress =
+    const pushP =
       progress(
-        time,
-        camera.pushStart,
-        camera.pushEnd
+        t,
+        cam.pushStart,
+        cam.pushEnd
       );
 
 
-    const cameraScale =
+    const scale =
       lerp(
-        camera.startScale,
-        camera.endScale,
-        easeInOutCubic(
-          pushProgress
-        )
+        cam.startScale,
+        cam.endScale,
+        easeInOutCubic(pushP)
       );
 
 
     cameraEl.style.transformOrigin =
-      `${camera.focusX}% ${camera.focusY}%`;
+      `${cam.focus.x}% ${cam.focus.y}%`;
 
 
     cameraEl.style.transform =
-      `scale(${cameraScale})`;
+      `scale(${scale.toFixed(4)})`;
 
 
-    /* =====================================================
-       DEBUG
-       ===================================================== */
+    // ======================================================
+    // DEBUG
+    // ======================================================
 
     if (
-      btnDebug.checked
+      DEBUG ||
+      debugHud.classList.contains("is-active")
     ) {
 
       const activeShot =
         shots.find(
-          shot =>
-            time >= shot.start &&
-            time < shot.end
-        );
+          s =>
+            t >= s.start &&
+            t < s.end
+        ) ||
+        shots[shots.length - 1];
 
 
       debugHud.textContent =
-        [
-          "TERRAVAULT — SCENE 07",
-          "",
-          `Time: ${time.toFixed(2)}s`,
-          `Shot: ${activeShot ? activeShot.id : "complete"}`,
-          `Camera: ${cameraScale.toFixed(2)}x`,
-          `Map opacity: ${mapOpacity.toFixed(2)}`
-        ].join("\n");
-
-
-      debugHud.classList.add(
-        "is-active"
-      );
+        `SCENE 07\n` +
+        `t = ${t.toFixed(2)}s / ${sceneConfig.duration}s\n` +
+        `shot: ${activeShot.id}\n` +
+        `map opacity: ${mapOpacity.toFixed(2)}\n` +
+        `camera scale: ${scale.toFixed(3)}`;
 
     }
 
   }
 
 
-  /* =========================
-     PLAYBACK ENGINE
-     ========================= */
+  // ========================================================
+  // MASTER CLOCK / PLAYBACK CONTROLLER
+  // ========================================================
 
   let playing = false;
 
   let currentTime = 0;
 
-  let lastFrameTime = null;
+  let lastFrameAt = null;
 
 
-  function formatTime(seconds) {
+  function formatTime(s) {
 
-    const minutes =
-      Math.floor(
-        seconds / 60
-      );
+    const m =
+      Math.floor(s / 60);
 
-
-    const secs =
-      (seconds % 60)
+    const sec =
+      (s % 60)
         .toFixed(1)
         .padStart(4, "0");
 
 
     return (
-      `${String(minutes).padStart(2, "0")}:${secs}`
+      `${String(m).padStart(2, "0")}:${sec}`
     );
 
   }
@@ -629,26 +552,29 @@
 
   function tick(now) {
 
-    if (!playing) {
-      return;
+    if (!playing) return;
+
+
+    if (
+      lastFrameAt == null
+    ) {
+
+      lastFrameAt = now;
+
     }
 
 
-    if (lastFrameTime === null) {
-      lastFrameTime = now;
-    }
+    const dt =
+      (now - lastFrameAt) /
+      1000;
 
 
-    const delta =
-      (now - lastFrameTime) / 1000;
-
-
-    lastFrameTime = now;
+    lastFrameAt = now;
 
 
     currentTime =
       clamp(
-        currentTime + delta,
+        currentTime + dt,
         0,
         sceneConfig.duration
       );
@@ -674,16 +600,14 @@
     }
 
 
-    requestAnimationFrame(
-      tick
-    );
+    requestAnimationFrame(tick);
 
   }
 
 
-  /* =========================
-     PLAY
-     ========================= */
+  // ========================================================
+  // PLAY
+  // ========================================================
 
   btnPlay.addEventListener(
     "click",
@@ -696,45 +620,38 @@
         btnPlay.textContent =
           "Play";
 
-        return;
-
       }
 
+      else {
 
-      playing = true;
+        playing = true;
 
-      lastFrameTime = null;
+        lastFrameAt = null;
 
-      btnPlay.textContent =
-        "Pause";
+        btnPlay.textContent =
+          "Pause";
 
+        requestAnimationFrame(
+          tick
+        );
 
-      requestAnimationFrame(
-        tick
-      );
+      }
 
     }
   );
 
 
-  /* =========================
-     RESTART
-     ========================= */
+  // ========================================================
+  // RESTART
+  // ========================================================
 
   btnRestart.addEventListener(
     "click",
     () => {
 
-      playing = false;
-
       currentTime = 0;
 
-      lastFrameTime = null;
-
-      btnPlay.textContent =
-        "Play";
-
-      render(0);
+      render(currentTime);
 
       updateReadout();
 
@@ -742,19 +659,17 @@
   );
 
 
-  /* =========================
-     SCRUBBER
-     ========================= */
+  // ========================================================
+  // SCRUBBER
+  // ========================================================
 
   scrubber.addEventListener(
     "input",
-    event => {
-
-      playing = false;
+    (e) => {
 
       currentTime =
         parseFloat(
-          event.target.value
+          e.target.value
         );
 
       render(currentTime);
@@ -765,29 +680,73 @@
   );
 
 
-  /* =========================
-     DEBUG
-     ========================= */
+  // ========================================================
+  // DEBUG
+  // ========================================================
 
   btnDebug.addEventListener(
     "change",
-    () => {
+    (e) => {
 
-      if (!btnDebug.checked) {
-
-        debugHud.classList.remove(
-          "is-active"
-        );
-
-      }
+      debugHud.classList.toggle(
+        "is-active",
+        e.target.checked
+      );
 
     }
   );
 
 
-  /* =========================
-     INITIAL STATE
-     ========================= */
+  // ========================================================
+// RECORD MODE
+//
+// Hides all preview controls WITHOUT stopping the animation.
+// ========================================================
+
+btnRecordMode.addEventListener(
+  "click",
+  () => {
+
+    const devPanel =
+      document.getElementById("devPanel");
+
+
+    // Hide all preview controls
+    if (devPanel) {
+
+      devPanel.style.display =
+        "none";
+
+    }
+
+
+    // Hide debug HUD
+    debugHud.classList.remove(
+      "is-active"
+    );
+
+    debugHud.style.display =
+      "none";
+
+
+    // IMPORTANT:
+    // Do NOT stop playback here.
+    //
+    // If the animation was already playing,
+    // it continues playing normally.
+    //
+    // If it was paused, it remains paused.
+    //
+    // No timeline, scene, camera or animation
+    // values are changed.
+
+  }
+);
+
+
+  // ========================================================
+  // INITIAL STATE
+  // ========================================================
 
   render(0);
 
