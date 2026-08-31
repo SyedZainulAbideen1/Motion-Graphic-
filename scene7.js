@@ -1,188 +1,796 @@
 /* =========================================================
-   TERRAVAULT — SCENE 07 TIMELINE ENGINE (v2)
-   Refs: TERRAVAULT_TIMELINE_SYSTEM.md, TERRAVAULT_CODE_ENGINE.md,
-         ANIMATION_PRINCIPLES.md
+   TERRAVAULT — SCENE 07
+   03:09–03:47
+   Total duration: 38 seconds
 
-   One master clock drives every layer. Deterministic: the same
-   time input always produces the same visual state.
+   Clean documentary motion system.
+
+   IMPORTANT:
+   The warning path is aligned to the actual
+   Birth Canal passage in cave-map.png.
    ========================================================= */
 
 (function () {
+
   "use strict";
 
-  const DEBUG = false; // must be false before final render
+
+  /* =========================
+     CONFIG
+     ========================= */
 
   const sceneConfig = {
+
     duration: 38,
+
     shots: [
-      { id: "shot-1", start: 0,  end: 6  },  // warning indicator reveal
-      { id: "shot-2", start: 6,  end: 12 },  // two incident markers
-      { id: "shot-3", start: 12, end: 19 },  // scout vs john comparison
-      { id: "shot-4", start: 19, end: 25 },  // pulley + 14 hours
-      { id: "shot-5", start: 25, end: 38 },  // return + camera push
+
+      {
+        id: "shot-1",
+        start: 0,
+        end: 6
+      },
+
+      {
+        id: "shot-2",
+        start: 6,
+        end: 12
+      },
+
+      {
+        id: "shot-3",
+        start: 12,
+        end: 19
+      },
+
+      {
+        id: "shot-4",
+        start: 19,
+        end: 25
+      },
+
+      {
+        id: "shot-5",
+        start: 25,
+        end: 38
+      }
+
     ],
+
     camera: {
-      focus: { x: 69.97, y: 52.55 }, // % — centroid of the traced passage path
+
+      focusX: 70.5,
+      focusY: 53,
+
       pushStart: 27,
       pushEnd: 37,
-      startScale: 1.0,
-      endScale: 1.22, // restrained push — this is the scene's strongest moment, not a zoom effect
-    },
-    hoursRevealAt: 20.5, // Shot 4: simple opacity/position reveal, no count-up
+
+      startScale: 1,
+      endScale: 1.28
+
+    }
+
   };
 
-  // ---- DOM refs ----
-  const sceneEl        = document.getElementById("scene-07");
-  const cameraEl       = document.getElementById("camera");
-  const mapGroupEl     = document.getElementById("mapGroup");
-  const warningZoneEl  = document.getElementById("warningZone");
-  const tick01El       = document.getElementById("tick01");
-  const tick02El       = document.getElementById("tick02");
-  const comparisonLayer= document.getElementById("comparisonLayer");
-  const pulleyLayer    = document.getElementById("pulleyLayer");
-  const hoursReadout   = document.getElementById("hoursReadout");
 
-  const btnPlay     = document.getElementById("btnPlay");
-  const btnRestart  = document.getElementById("btnRestart");
-  const scrubber    = document.getElementById("scrubber");
-  const timeReadout = document.getElementById("timeReadout");
-  const btnDebug    = document.getElementById("btnDebug");
-  const debugHud    = document.getElementById("debugHud");
+  /* =========================
+     DOM
+     ========================= */
 
-  // ---- utilities ----
-  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-  const lerp  = (a, b, t) => a + (b - a) * t;
-  const progress = (t, start, end) => clamp((t - start) / (end - start), 0, 1);
-  const easeOutCubic   = (t) => 1 - Math.pow(1 - t, 3);
-  const easeInOutCubic = (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-  const setClass = (el, name, on) => el.classList.toggle(name, !!on);
+  const sceneEl =
+    document.getElementById("scene-07");
+
+  const cameraEl =
+    document.getElementById("camera");
+
+  const mapGroupEl =
+    document.getElementById("mapGroup");
+
+  const warningZoneEl =
+    document.getElementById("warningZone");
+
+  const incidentLayerEl =
+    document.getElementById("incidentLayer");
+
+  const incident01El =
+    document.getElementById("incident01");
+
+  const incident02El =
+    document.getElementById("incident02");
+
+  const comparisonLayer =
+    document.getElementById("comparisonLayer");
+
+  const pulleyLayer =
+    document.getElementById("pulleyLayer");
+
+  const hoursReadout =
+    document.getElementById("hoursReadout");
+
+  const btnPlay =
+    document.getElementById("btnPlay");
+
+  const btnRestart =
+    document.getElementById("btnRestart");
+
+  const scrubber =
+    document.getElementById("scrubber");
+
+  const timeReadout =
+    document.getElementById("timeReadout");
+
+  const btnDebug =
+    document.getElementById("btnDebug");
+
+  const debugHud =
+    document.getElementById("debugHud");
+
+
+  /* =========================
+     UTILITIES
+     ========================= */
+
+  const clamp = (value, min, max) =>
+    Math.max(min, Math.min(max, value));
+
+
+  const lerp = (a, b, t) =>
+    a + (b - a) * t;
+
+
+  const progress = (time, start, end) => {
+
+    if (end === start) {
+      return time >= end ? 1 : 0;
+    }
+
+    return clamp(
+      (time - start) / (end - start),
+      0,
+      1
+    );
+
+  };
+
+
+  const easeOutCubic = (t) =>
+    1 - Math.pow(1 - t, 3);
+
+
+  const easeInOutCubic = (t) => {
+
+    return t < 0.5
+
+      ? 4 * t * t * t
+
+      : 1 -
+        Math.pow(-2 * t + 2, 3) / 2;
+
+  };
+
+
+  /* =========================
+     RESPONSIVE STAGE
+     ========================= */
 
   function fitStage() {
-    const scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
-    sceneEl.style.setProperty("--stage-scale", scale.toFixed(4));
+
+    const scale =
+      Math.min(
+        window.innerWidth / 1920,
+        window.innerHeight / 1080
+      );
+
+    sceneEl.style.transform =
+      `scale(${scale})`;
+
   }
-  window.addEventListener("resize", fitStage);
+
+
+  window.addEventListener(
+    "resize",
+    fitStage
+  );
+
+
   fitStage();
 
-  // ---- render: pure function of time (deterministic) ----
-  function render(t) {
-    const shots = sceneConfig.shots;
 
-    // ================= SHOT 1 (0–6s): map is visible from frame one;
-    // the only new element is a single stroke line-draw along the
-    // traced passage shape, then a hold. No repeated pulsing. =================
-    setClass(warningZoneEl, "is-drawn", t >= 1.4);
+  /* =========================
+     MAIN RENDER FUNCTION
+     ========================= */
 
-    // ================= SHOT 2 (6–12s): two short ticks, no circles ==============
-    setClass(tick01El, "is-visible", t >= 6.6 && t < shots[3].start);
-    setClass(tick02El, "is-visible", t >= 8.4 && t < shots[3].start);
+  function render(time) {
 
-    // ================= MAP GROUP visibility across the scene =================
-    const mapFadeOutStart = shots[3].start - 0.5;
-    const mapFadeIn0 = shots[4].end - 0.6;
-    const fadeOutP = progress(t, mapFadeOutStart, shots[3].start);
-    const fadeInP  = progress(t, mapFadeIn0, shots[4].end);
-    let mapOpacity;
-    if (t < mapFadeOutStart) mapOpacity = 1;
-    else if (t < shots[3].start) mapOpacity = 1 - easeOutCubic(fadeOutP);
-    else if (t < mapFadeIn0) mapOpacity = 0;
-    else mapOpacity = easeOutCubic(fadeInP);
-    mapGroupEl.style.opacity = String(mapOpacity);
+    const shots =
+      sceneConfig.shots;
 
-    // ================= SHOT 3 (12–19s): comparison =================
-    const compInP  = progress(t, shots[2].start, shots[2].start + 0.7);
-    const compOutP = progress(t, shots[3].start - 0.5, shots[3].start);
-    let compOpacity = 0;
-    if (t >= shots[2].start && t < shots[3].start - 0.5) compOpacity = easeOutCubic(compInP);
-    else if (t >= shots[3].start - 0.5 && t < shots[3].start) compOpacity = 1 - easeOutCubic(compOutP);
-    comparisonLayer.style.opacity = String(compOpacity);
-    setClass(comparisonLayer, "is-visible", compOpacity > 0.02);
 
-    // ================= SHOT 4 (19–25s): pulley reveal, then "14 HOURS" =================
-    const pulleyInP  = progress(t, shots[3].start, shots[3].start + 0.6);
-    const pulleyOutP = progress(t, shots[4].start - 0.5, shots[4].start);
-    let pulleyOpacity = 0;
-    if (t >= shots[3].start && t < shots[4].start - 0.5) pulleyOpacity = easeOutCubic(pulleyInP);
-    else if (t >= shots[4].start - 0.5 && t < shots[4].start) pulleyOpacity = 1 - easeOutCubic(pulleyOutP);
-    pulleyLayer.style.opacity = String(pulleyOpacity);
-    setClass(pulleyLayer, "is-visible", pulleyOpacity > 0.02);
+    /* =====================================================
+       SHOT 1
+       00:00–06:00
+       Cave map + actual Birth Canal highlight
+       ===================================================== */
 
-    setClass(hoursReadout, "is-visible", t >= sceneConfig.hoursRevealAt && t < shots[4].start);
+    const warningProgress =
+      progress(
+        time,
+        0.8,
+        2.4
+      );
 
-    // ================= SHOT 5 (25–38s): camera push toward the warning zone =================
-    const cam = sceneConfig.camera;
-    const pushP = progress(t, cam.pushStart, cam.pushEnd);
-    const scale = lerp(cam.startScale, cam.endScale, easeInOutCubic(pushP));
-    cameraEl.style.transformOrigin = `${cam.focus.x}% ${cam.focus.y}%`;
-    cameraEl.style.transform = `scale(${scale.toFixed(4)})`;
 
-    // ================= DEBUG =================
-    if (DEBUG || debugHud.classList.contains("is-active")) {
-      const activeShot = shots.find(s => t >= s.start && t < s.end) || shots[shots.length - 1];
-      debugHud.textContent =
-        `SCENE 07\n` +
-        `t = ${t.toFixed(2)}s / ${sceneConfig.duration}s\n` +
-        `shot: ${activeShot.id}\n` +
-        `map opacity: ${mapOpacity.toFixed(2)}\n` +
-        `camera scale: ${scale.toFixed(3)}`;
+    warningZoneEl.style.opacity =
+      String(
+        easeOutCubic(warningProgress)
+      );
+
+
+    if (time >= 0.8) {
+
+      warningZoneEl.classList.add(
+        "is-active"
+      );
+
+    } else {
+
+      warningZoneEl.classList.remove(
+        "is-active"
+      );
+
     }
+
+
+    /* =====================================================
+       SHOT 2
+       06:00–12:00
+       Two tiny incident points
+       ===================================================== */
+
+    if (time >= 6) {
+
+      incidentLayerEl.classList.add(
+        "is-visible"
+      );
+
+    } else {
+
+      incidentLayerEl.classList.remove(
+        "is-visible"
+      );
+
+    }
+
+
+    if (time >= 6.5) {
+
+      incident01El.classList.add(
+        "is-visible"
+      );
+
+    } else {
+
+      incident01El.classList.remove(
+        "is-visible"
+      );
+
+    }
+
+
+    if (time >= 8.2) {
+
+      incident02El.classList.add(
+        "is-visible"
+      );
+
+    } else {
+
+      incident02El.classList.remove(
+        "is-visible"
+      );
+
+    }
+
+
+    /* =====================================================
+       MAP VISIBILITY
+       ===================================================== */
+
+    let mapOpacity = 1;
+
+
+    /*
+      Fade the map out just before
+      comparison begins.
+    */
+
+    if (
+      time >= 18.4 &&
+      time < 19
+    ) {
+
+      const p =
+        progress(
+          time,
+          18.4,
+          19
+        );
+
+      mapOpacity =
+        1 -
+        easeOutCubic(p);
+
+    }
+
+
+    /*
+      Map returns during Shot 5.
+    */
+
+    else if (
+      time >= 25 &&
+      time < 25.8
+    ) {
+
+      const p =
+        progress(
+          time,
+          25,
+          25.8
+        );
+
+      mapOpacity =
+        easeOutCubic(p);
+
+    }
+
+
+    else if (
+      time >= 19 &&
+      time < 25
+    ) {
+
+      mapOpacity = 0;
+
+    }
+
+
+    mapGroupEl.style.opacity =
+      String(mapOpacity);
+
+
+    /* =====================================================
+       SHOT 3
+       12–19
+       Scout vs John
+       ===================================================== */
+
+    let comparisonOpacity = 0;
+
+
+    if (
+      time >= 12 &&
+      time < 18.4
+    ) {
+
+      const p =
+        progress(
+          time,
+          12,
+          12.8
+        );
+
+      comparisonOpacity =
+        easeOutCubic(p);
+
+    }
+
+
+    else if (
+      time >= 18.4 &&
+      time < 19
+    ) {
+
+      const p =
+        progress(
+          time,
+          18.4,
+          19
+        );
+
+      comparisonOpacity =
+        1 -
+        easeOutCubic(p);
+
+    }
+
+
+    comparisonLayer.style.opacity =
+      String(comparisonOpacity);
+
+
+    if (comparisonOpacity > 0.01) {
+
+      comparisonLayer.classList.add(
+        "is-visible"
+      );
+
+    } else {
+
+      comparisonLayer.classList.remove(
+        "is-visible"
+      );
+
+    }
+
+
+    /* =====================================================
+       SHOT 4
+       19–25
+       Pulley + 14 HOURS
+       ===================================================== */
+
+    let pulleyOpacity = 0;
+
+
+    if (
+      time >= 19 &&
+      time < 24.5
+    ) {
+
+      const p =
+        progress(
+          time,
+          19,
+          19.8
+        );
+
+      pulleyOpacity =
+        easeOutCubic(p);
+
+    }
+
+
+    else if (
+      time >= 24.5 &&
+      time < 25
+    ) {
+
+      const p =
+        progress(
+          time,
+          24.5,
+          25
+        );
+
+      pulleyOpacity =
+        1 -
+        easeOutCubic(p);
+
+    }
+
+
+    pulleyLayer.style.opacity =
+      String(pulleyOpacity);
+
+
+    if (pulleyOpacity > 0.01) {
+
+      pulleyLayer.classList.add(
+        "is-visible"
+      );
+
+    } else {
+
+      pulleyLayer.classList.remove(
+        "is-visible"
+      );
+
+    }
+
+
+    /* =========================
+       14 HOURS
+       ========================= */
+
+    if (
+      time >= 20.2 &&
+      time < 24.5
+    ) {
+
+      hoursReadout.classList.add(
+        "is-visible"
+      );
+
+    } else {
+
+      hoursReadout.classList.remove(
+        "is-visible"
+      );
+
+    }
+
+
+    /* =====================================================
+       SHOT 5
+       25–38
+       Slow camera push
+       ===================================================== */
+
+    const camera =
+      sceneConfig.camera;
+
+
+    const pushProgress =
+      progress(
+        time,
+        camera.pushStart,
+        camera.pushEnd
+      );
+
+
+    const cameraScale =
+      lerp(
+        camera.startScale,
+        camera.endScale,
+        easeInOutCubic(
+          pushProgress
+        )
+      );
+
+
+    cameraEl.style.transformOrigin =
+      `${camera.focusX}% ${camera.focusY}%`;
+
+
+    cameraEl.style.transform =
+      `scale(${cameraScale})`;
+
+
+    /* =====================================================
+       DEBUG
+       ===================================================== */
+
+    if (
+      btnDebug.checked
+    ) {
+
+      const activeShot =
+        shots.find(
+          shot =>
+            time >= shot.start &&
+            time < shot.end
+        );
+
+
+      debugHud.textContent =
+        [
+          "TERRAVAULT — SCENE 07",
+          "",
+          `Time: ${time.toFixed(2)}s`,
+          `Shot: ${activeShot ? activeShot.id : "complete"}`,
+          `Camera: ${cameraScale.toFixed(2)}x`,
+          `Map opacity: ${mapOpacity.toFixed(2)}`
+        ].join("\n");
+
+
+      debugHud.classList.add(
+        "is-active"
+      );
+
+    }
+
   }
 
-  // ---- master clock / playback controller ----
+
+  /* =========================
+     PLAYBACK ENGINE
+     ========================= */
+
   let playing = false;
-  let currentTime = 0;
-  let lastFrameAt = null;
 
-  function formatTime(s) {
-    const m = Math.floor(s / 60);
-    const sec = (s % 60).toFixed(1).padStart(4, "0");
-    return `${String(m).padStart(2, "0")}:${sec}`;
+  let currentTime = 0;
+
+  let lastFrameTime = null;
+
+
+  function formatTime(seconds) {
+
+    const minutes =
+      Math.floor(
+        seconds / 60
+      );
+
+
+    const secs =
+      (seconds % 60)
+        .toFixed(1)
+        .padStart(4, "0");
+
+
+    return (
+      `${String(minutes).padStart(2, "0")}:${secs}`
+    );
+
   }
+
+
   function updateReadout() {
-    timeReadout.textContent = `${formatTime(currentTime)} / ${formatTime(sceneConfig.duration)}`;
-    scrubber.value = currentTime.toFixed(2);
+
+    timeReadout.textContent =
+      `${formatTime(currentTime)} / ${formatTime(sceneConfig.duration)}`;
+
+
+    scrubber.value =
+      currentTime.toFixed(2);
+
   }
+
+
   function tick(now) {
-    if (!playing) return;
-    if (lastFrameAt == null) lastFrameAt = now;
-    const dt = (now - lastFrameAt) / 1000;
-    lastFrameAt = now;
-    currentTime = clamp(currentTime + dt, 0, sceneConfig.duration);
-    render(currentTime);
-    updateReadout();
-    if (currentTime >= sceneConfig.duration) {
-      playing = false;
-      btnPlay.textContent = "Play";
+
+    if (!playing) {
       return;
     }
-    requestAnimationFrame(tick);
+
+
+    if (lastFrameTime === null) {
+      lastFrameTime = now;
+    }
+
+
+    const delta =
+      (now - lastFrameTime) / 1000;
+
+
+    lastFrameTime = now;
+
+
+    currentTime =
+      clamp(
+        currentTime + delta,
+        0,
+        sceneConfig.duration
+      );
+
+
+    render(currentTime);
+
+    updateReadout();
+
+
+    if (
+      currentTime >=
+      sceneConfig.duration
+    ) {
+
+      playing = false;
+
+      btnPlay.textContent =
+        "Play";
+
+      return;
+
+    }
+
+
+    requestAnimationFrame(
+      tick
+    );
+
   }
 
-  btnPlay.addEventListener("click", () => {
-    if (playing) {
-      playing = false;
-      btnPlay.textContent = "Play";
-    } else {
+
+  /* =========================
+     PLAY
+     ========================= */
+
+  btnPlay.addEventListener(
+    "click",
+    () => {
+
+      if (playing) {
+
+        playing = false;
+
+        btnPlay.textContent =
+          "Play";
+
+        return;
+
+      }
+
+
       playing = true;
-      lastFrameAt = null;
-      btnPlay.textContent = "Pause";
-      requestAnimationFrame(tick);
+
+      lastFrameTime = null;
+
+      btnPlay.textContent =
+        "Pause";
+
+
+      requestAnimationFrame(
+        tick
+      );
+
     }
-  });
-  btnRestart.addEventListener("click", () => {
-    currentTime = 0;
-    render(currentTime);
-    updateReadout();
-  });
-  scrubber.addEventListener("input", (e) => {
-    currentTime = parseFloat(e.target.value);
-    render(currentTime);
-    updateReadout();
-  });
-  btnDebug.addEventListener("change", (e) => {
-    debugHud.classList.toggle("is-active", e.target.checked);
-  });
+  );
+
+
+  /* =========================
+     RESTART
+     ========================= */
+
+  btnRestart.addEventListener(
+    "click",
+    () => {
+
+      playing = false;
+
+      currentTime = 0;
+
+      lastFrameTime = null;
+
+      btnPlay.textContent =
+        "Play";
+
+      render(0);
+
+      updateReadout();
+
+    }
+  );
+
+
+  /* =========================
+     SCRUBBER
+     ========================= */
+
+  scrubber.addEventListener(
+    "input",
+    event => {
+
+      playing = false;
+
+      currentTime =
+        parseFloat(
+          event.target.value
+        );
+
+      render(currentTime);
+
+      updateReadout();
+
+    }
+  );
+
+
+  /* =========================
+     DEBUG
+     ========================= */
+
+  btnDebug.addEventListener(
+    "change",
+    () => {
+
+      if (!btnDebug.checked) {
+
+        debugHud.classList.remove(
+          "is-active"
+        );
+
+      }
+
+    }
+  );
+
+
+  /* =========================
+     INITIAL STATE
+     ========================= */
 
   render(0);
+
   updateReadout();
+
 })();
